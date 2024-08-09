@@ -11,5 +11,11 @@
   "license": "ISC",
   "dependencies": {
     "sql.js-httpvfs": "^0.8.12"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@babel/preset-env": "^7.25.3",
+    "babel-loader": "^9.1.3",
+    "webpack-cli": "^5.1.4"
   }
 }
