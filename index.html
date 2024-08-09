@@ -3,10 +3,444 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Funding Data</title>
+    <title>FinTech Fusion: Advanced Funding Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        :root {
+            --bg-color: #0a0e17;
+            --card-bg: #141b2d;
+            --text-color: #e0e0e0;
+            --accent-color: #3a86ff;
+            --secondary-accent: #00f5d4;
+            --error-color: #ff6b6b;
+            --success-color: #51cf66;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1, h2 {
+            color: var(--accent-color);
+            margin-bottom: 15px;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background-color: var(--accent-color);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .btn:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #2d3748;
+            background-color: #1a202c;
+            color: var(--text-color);
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+        
+        th, td {
+            text-align: left;
+            padding: 12px;
+        }
+        
+        th {
+            background-color: #2d3748;
+            color: var(--secondary-accent);
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+        
+        tr {
+            background-color: #1e2837;
+            transition: all 0.3s ease;
+        }
+        
+        tr:hover {
+            background-color: #2d3748;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-item {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+        
+        .pagination button {
+            margin: 0 5px;
+        }
+        
+        #pageInfo {
+            margin: 0 10px;
+            font-size: 14px;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+    </style>
 </head>
 <body>
-    <h1>Funding Data Project</h1>
+    <div class="container">
+        <h1>FinTech Fusion: Advanced Funding Dashboard</h1>
+        
+        <div class="flex">
+            <div class="card" style="width: 48%;">
+                <h2>Funding Overview</h2>
+                <div id="fundingOverviewChart"></div>
+            </div>
+            
+            <div class="card" style="width: 48%;">
+                <h2>Funding Round Distribution</h2>
+                <div id="fundingTypeChart"></div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Company Funding Data</h2>
+            <div class="filters">
+                <div class="filter-item">
+                    <input type="text" id="searchInput" placeholder="Search companies...">
+                </div>
+                <div class="filter-item">
+                    <select id="roundFilter">
+                        <option value="">All Rounds</option>
+                        <option value="Seed">Seed</option>
+                        <option value="Series A">Series A</option>
+                        <option value="Series B">Series B</option>
+                        <option value="Series C">Series C</option>
+                        <option value="Series D+">Series D+</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <input type="number" id="minFunding" placeholder="Min Funding ($M)">
+                </div>
+                <div class="filter-item">
+                    <input type="number" id="maxFunding" placeholder="Max Funding ($M)">
+                </div>
+                <div class="filter-item">
+                    <button onclick="applyFilters()" class="btn">Apply Filters</button>
+                </div>
+            </div>
+            <table id="fundingTable">
+                <thead>
+                    <tr>
+                        <th>Company Name</th>
+                        <th>Latest Round</th>
+                        <th>Date</th>
+                        <th>Total Raised</th>
+                        <th>Valuation</th>
+                        <th>Location</th>
+                    </tr>
+                </thead>
+                <tbody id="fundingTableBody">
+                    <!-- Table rows will be populated dynamically -->
+                </tbody>
+            </table>
+            <div class="pagination">
+                <button id="prevPage" class="btn" onclick="changePage(-1)">Previous</button>
+                <span id="pageInfo"></span>
+                <button id="nextPage" class="btn" onclick="changePage(1)">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
     <script src="dist/bundle.js"></script>
+    <script>
+        // Function to render the table with data from the database
+        function renderTable(data) {
+            const tableBody = document.getElementById('fundingTableBody');
+            tableBody.innerHTML = '';
+
+            data[0].values.forEach(row => {
+                const tableRow = `
+                    <tr>
+                        <td>${row[6]}</td>
+                        <td>${row[11]}</td>
+                        <td>${row[7]}</td>
+                        <td>${row[8] ? `$${(row[8] / 1_000_000).toFixed(2)}M` : 'N/A'}</td>
+                        <td>${row[16]}</td>
+                        <td>${row[17]}</td>
+                    </tr>
+                `;
+                tableBody.innerHTML += tableRow;
+            });
+
+            updatePagination();
+        }
+
+        function updatePagination() {
+            const pageInfo = document.getElementById('pageInfo');
+            const totalPages = Math.ceil(filteredCompanies.length / itemsPerPage);
+            pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+            
+            document.getElementById('prevPage').disabled = currentPage === 1;
+            document.getElementById('nextPage').disabled = currentPage === totalPages;
+        }
+
+        function changePage(direction) {
+            currentPage += direction;
+            renderTable(filteredCompanies);
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const roundFilter = document.getElementById('roundFilter').value;
+            const minFunding = parseFloat(document.getElementById('minFunding').value) * 1000000 || 0;
+            const maxFunding = parseFloat(document.getElementById('maxFunding').value) * 1000000 || Infinity;
+
+            // Filter the companies based on the search and filter inputs
+            filteredCompanies = companies.filter(company => 
+                company.name.toLowerCase().includes(searchTerm) &&
+                (roundFilter === '' || company.latestRound === roundFilter) &&
+                company.totalRaised >= minFunding &&
+                company.totalRaised <= maxFunding
+            );
+
+            currentPage = 1;
+            renderTable(filteredCompanies);
+            renderCharts();
+        }
+
+        function renderCharts() {
+            renderFundingOverviewChart();
+            renderFundingTypeChart();
+        }
+
+        function renderFundingOverviewChart() {
+            const sortedCompanies = [...filteredCompanies].sort((a, b) => b.totalRaised - a.totalRaised).slice(0, 5);
+            
+            const options = {
+                series: [{
+                    name: 'Total Raised',
+                    data: sortedCompanies.map(company => company.totalRaised)
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 350,
+                    toolbar: {
+                        show: false
+                    },
+                    background: 'transparent'
+                },
+                plotOptions: {
+                    bar: {
+                        borderRadius: 4,
+                        horizontal: true,
+                    }
+                },
+                dataLabels: {
+                    enabled: false
+                },
+                xaxis: {
+                    categories: sortedCompanies.map(company => company.name),
+                    labels: {
+                        formatter: function (value) {
+                            return `$${(value / 1_000_000).toFixed(2)}M`;
+                        },
+                        style: {
+                            colors: '#e0e0e0'
+                        }
+                    }
+                },
+                yaxis: {
+                    labels: {
+                        style: {
+                            colors: '#e0e0e0'
+                        }
+                    }
+                },
+                title: {
+                    text: 'Top 5 Companies by Total Funding',
+                    align: 'center',
+                    style: {
+                        color: '#e0e0e0'
+                    }
+                },
+                theme: {
+                    mode: 'dark',
+                    palette: 'palette1'
+                },
+                tooltip: {
+                    y: {
+                        formatter: function (value) {
+                            return `$${(value / 1_000_000).toFixed(2)}M`;
+                        }
+                    }
+                }
+            };
+
+            const chart = new ApexCharts(document.querySelector("#fundingOverviewChart"), options);
+            chart.render();
+        }
+
+        function renderFundingTypeChart() {
+            const roundCounts = filteredCompanies.reduce((acc, company) => {
+                acc[company.latestRound] = (acc[company.latestRound] || 0) + 1;
+                return acc;
+            }, {});
+
+            const options = {
+                series: Object.values(roundCounts),
+                chart: {
+                    type: 'pie',
+                    height: 350,
+                    background: 'transparent'
+                },
+                labels: Object.keys(roundCounts),
+                responsive: [{
+                    breakpoint: 480,
+                    options: {
+                        chart: {
+                            width: 200
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }],
+                theme: {
+                    mode: 'dark',
+                    palette: 'palette2'
+                },
+                title: {
+                    text: 'Distribution of Funding Rounds',
+                    align: 'center',
+                    style: {
+                        color: '#e0e0e0'
+                    }
+                },
+                legend: {
+                    labels: {
+                        colors: '#e0e0e0'
+                    }
+                },
+                tooltip: {
+                    y: {
+                        formatter: function (value) {
+                            return `${value} companies`;
+                        }
+                    }
+                }
+            };
+
+            const chart = new ApexCharts(document.querySelector("#fundingTypeChart"), options);
+            chart.render();
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const dbData = await loadDatabase();
+                // Assuming the data returned needs some formatting to fit the table
+                companies = dbData[0].values.map(row => ({
+                    name: row[6],
+                    latestRound: row[11],
+                    date: row[7],
+                    totalRaised: row[8] || 0,
+                    valuation: row[16],
+                    location: row[17],
+                }));
+                filteredCompanies = [...companies];
+                renderTable(filteredCompanies);
+                renderCharts();
+            } catch (error) {
+                console.error("Error loading database:", error);
+            }
+        });
+
+        // Event listeners for filter input
+        document.getElementById('searchInput').addEventListener('input', applyFilters);
+        document.getElementById('roundFilter').addEventListener('change', applyFilters);
+        document.getElementById('minFunding').addEventListener('input', applyFilters);
+        document.getElementById('maxFunding').addEventListener('input', applyFilters);
+    </script>
 </body>
 </html>
