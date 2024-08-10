@@ -107,7 +107,7 @@ function applyFilters() {
   let query = "SELECT * FROM mytable WHERE 1=1"; // Default query, 1=1 ensures that we can safely append additional conditions
 
   if (searchTerm) {
-    query += ` AND LOWER(name) LIKE '%${searchTerm}%'`;
+    query += ` AND LOWER(name) LIKE '%${searchTerm}%'`;  // Replace 'name' with the actual column name
   }
 
   if (roundFilter) {
@@ -251,6 +251,10 @@ function renderFundingTypeChart() {
   const chart = new ApexCharts(document.querySelector("#fundingTypeChart"), options);
   chart.render();
 }
+
+// Attach functions to the window object to make them accessible globally
+window.changePage = changePage;
+window.applyFilters = applyFilters;
 
 document.addEventListener('DOMContentLoaded', loadDatabaseAndRender);
 
