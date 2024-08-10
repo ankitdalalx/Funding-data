@@ -40,21 +40,21 @@ let worker;
 })();
 
 // Items per page and pagination settings
-const itemsPerPage = 5;
+const itemsPerPage = 15;
 let currentPage = 1;
 let filteredCompanies = [];
 
-async function loadDatabaseAndRender() {
+async function loadDatabaseAndRender(query = "SELECT * FROM mytable") {
   try {
-    const results = await worker.db.exec("SELECT * FROM mytable");
-    filteredCompanies = results[0].values.map(row => ({
+    const results = await worker.db.exec(query);
+    filteredCompanies = results[0]?.values.map(row => ({
       name: row[6],
       latestRound: row[11],
       date: row[7],
       totalRaised: row[8] || 0,
       valuation: row[16],
       location: row[17],
-    }));
+    })) || [];
     renderTable(filteredCompanies);
     renderCharts();
   } catch (error) {
@@ -103,16 +103,27 @@ function applyFilters() {
   const minFunding = parseFloat(document.getElementById('minFunding').value) * 1000000 || 0;
   const maxFunding = parseFloat(document.getElementById('maxFunding').value) * 1000000 || Infinity;
 
-  filteredCompanies = companies.filter(company =>
-    company.name.toLowerCase().includes(searchTerm) &&
-    (roundFilter === '' || company.latestRound === roundFilter) &&
-    company.totalRaised >= minFunding &&
-    company.totalRaised <= maxFunding
-  );
+  // Build the SQL query dynamically
+  let query = "SELECT * FROM mytable WHERE 1=1"; // Default query, 1=1 ensures that we can safely append additional conditions
 
-  currentPage = 1;
-  renderTable(filteredCompanies);
-  renderCharts();
+  if (searchTerm) {
+    query += ` AND LOWER(name) LIKE '%${searchTerm}%'`;
+  }
+
+  if (roundFilter) {
+    query += ` AND latestRound = '${roundFilter}'`;
+  }
+
+  if (!isNaN(minFunding)) {
+    query += ` AND totalRaised >= ${minFunding}`;
+  }
+
+  if (!isNaN(maxFunding)) {
+    query += ` AND totalRaised <= ${maxFunding}`;
+  }
+
+  currentPage = 1; // Reset to the first page when applying filters
+  loadDatabaseAndRender(query);
 }
 
 function renderCharts() {
